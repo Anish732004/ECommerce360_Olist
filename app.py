@@ -225,6 +225,9 @@ with tab_geo:
         
         map_data = pd.merge(cust_counts, geo_agg, on='geolocation_zip_code_prefix')
         
+        # Rename for st.map
+        map_data.rename(columns={'geolocation_lat': 'lat', 'geolocation_lng': 'lon'}, inplace=True)
+        
         st.write(f"Plotting {len(map_data)} locations.")
         st.map(map_data, size='count', color='#0044ff') # color arg available in newer streamlit
     else:
