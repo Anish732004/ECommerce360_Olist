@@ -85,7 +85,6 @@ def plot_network(G):
                 thickness=15,
                 title='Connections',
                 xanchor='left',
-                titleside='right'
             ),
             line_width=2),
         text=node_text
