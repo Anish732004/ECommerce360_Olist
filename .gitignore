@@ -34,7 +34,6 @@ env.bak/
 venv.bak/
 
 # Olist Data (Large CSVs)
-data/
 
 # Streamlit
 .streamlit/
