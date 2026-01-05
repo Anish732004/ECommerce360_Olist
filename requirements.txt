@@ -6,7 +6,3 @@ networkx
 wordcloud
 vaderSentiment
 matplotlib
-scikit-learn
-pydeck
-altair
-st-aggrid
