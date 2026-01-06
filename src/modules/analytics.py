@@ -140,6 +140,106 @@ def train_late_delivery_model(df):
     
     return clf, X_test, y_test, y_pred, y_prob
 
+def calculate_cohort_retention(df):
+    """
+    Calculates Cohort Retention Matrix (Heatmap).
+    """
+    if 'order_purchase_timestamp' not in df.columns or 'customer_unique_id' not in df.columns:
+        return None
+    
+    # 1. Monthly Cohorts
+    df = df.copy()
+    df['order_month'] = df['order_purchase_timestamp'].dt.to_period('M')
+    
+    # 2. Assign Cohort (First purchase month)
+    df['cohort'] = df.groupby('customer_unique_id')['order_purchase_timestamp'].transform('min').dt.to_period('M')
+    
+    # 3. Aggregate cohorts
+    cohort_data = df.groupby(['cohort', 'order_month']).agg(n_customers=('customer_unique_id', 'nunique')).reset_index()
+    
+    # 4. Period Number (Month index)
+    cohort_data['period_number'] = (cohort_data.order_month - cohort_data.cohort).apply(lambda x: x.n)
+    
+    # 5. Pivot Table
+    cohort_pivot = cohort_data.pivot_table(index='cohort', columns='period_number', values='n_customers')
+    
+    # 6. Retention %
+    cohort_size = cohort_pivot.iloc[:, 0]
+    retention_matrix = cohort_pivot.divide(cohort_size, axis=0) * 100
+    
+    return retention_matrix
+
+def calculate_pareto(df, entity='product_id', metric='price'):
+    """
+    Calculates Pareto (80/20) Analysis data.
+    """
+    if entity not in df.columns or metric not in df.columns:
+        return None
+        
+    # Group by entity and sum metric
+    grouped = df.groupby(entity)[metric].sum().reset_index()
+    grouped = grouped.sort_values(by=metric, ascending=False)
+    
+    # Cumulative Sum
+    grouped['cumulative_sum'] = grouped[metric].cumsum()
+    grouped['cumulative_perc'] = 100 * grouped['cumulative_sum'] / grouped[metric].sum()
+    
+    return grouped
+
+def get_seller_performance(df):
+    """
+    Computes Seller Revenue vs Late Delivery Rate for Matrix Plot.
+    """
+    required = ['seller_id', 'price', 'order_estimated_delivery_date', 'order_delivered_customer_date']
+    if not all(col in df.columns for col in required):
+        return None
+        
+    df = df.copy()
+    df['is_late'] = (df['order_delivered_customer_date'] > df['order_estimated_delivery_date']).astype(int)
+    
+    stats = df.groupby('seller_id').agg(
+        revenue=('price', 'sum'),
+        total_orders=('order_id', 'nunique'),
+        late_orders=('is_late', 'sum')
+    ).reset_index()
+    
+    stats['late_rate'] = stats['late_orders'] / stats['total_orders']
+    
+    # Filter for active sellers (>10 orders) to remove noise
+    return stats[stats['total_orders'] > 10]
+
+def calculate_mom_metrics(df):
+    """
+    Calculates Month-over-Month growth for key metrics.
+    """
+    pd.set_option('mode.chained_assignment', None)
+    if 'order_purchase_timestamp' not in df.columns:
+        return None
+        
+    # Resample
+    monthly = df.set_index('order_purchase_timestamp').resample('M').agg({
+        'price': 'sum',
+        'order_id': 'nunique',
+    }).reset_index()
+    
+    # Calculate Deltas
+    monthly['rev_growth'] = monthly['price'].pct_change() * 100
+    monthly['order_growth'] = monthly['order_id'].pct_change() * 100
+    
+    # Get last month stats
+    current = monthly.iloc[-1]
+    
+    # Handle NaN for first month
+    rev_delta = current['rev_growth'] if not np.isnan(current['rev_growth']) else 0
+    order_delta = current['order_growth'] if not np.isnan(current['order_growth']) else 0
+    
+    return {
+        'revenue': current['price'],
+        'rev_delta': rev_delta,
+        'orders': current['order_id'],
+        'order_delta': order_delta
+    }
+
 def get_analyzer():
     return SentimentIntensityAnalyzer()
 

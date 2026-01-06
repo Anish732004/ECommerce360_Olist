@@ -175,3 +175,76 @@ def plot_map_scatter(df):
     )
     fig.update_layout(title="Geographic Distribution of Customers")
     return fig
+
+# --- Phase 4 Visuals ---
+
+def plot_cohort_heatmap(retention_matrix):
+    """
+    Plots Cohort Retention Heatmap.
+    """
+    fig = px.imshow(
+        retention_matrix,
+        labels=dict(x="Months Since First Purchase", y="Cohort Month", color="Retention %"),
+        x=retention_matrix.columns,
+        y=retention_matrix.index.astype(str),
+        color_continuous_scale='Blues',
+        text_auto=".1f"
+    )
+    fig.update_layout(title="Customer Retention by Cohort (%)")
+    fig.update_yaxes(autorange="reversed") # Newest cohorts at bottom
+    return fig
+
+def plot_pareto(df, x_col, y_col, cumulative_col):
+    """
+    Plots Pareto Chart (Bar + Line).
+    """
+    from plotly.subplots import make_subplots
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # Bar (Contribution)
+    fig.add_trace(
+        go.Bar(x=df[x_col], y=df[y_col], name='Contribution', marker_color='rgb(26, 118, 255)'),
+        secondary_y=False
+    )
+    
+    # Line (Cumulative %)
+    fig.add_trace(
+        go.Scatter(x=df[x_col], y=df[cumulative_col], name='Cumulative %', mode='lines+markers', line=dict(color='rgb(255, 65, 54)')),
+        secondary_y=True
+    )
+    
+    fig.add_shape(type="line", line=dict(dash='dash'),
+        x0=df[x_col].iloc[0], x1=df[x_col].iloc[-1], y0=80, y1=80, yref='y2'
+    )
+    
+    fig.update_layout(title="Pareto Analysis (80/20 Rule)")
+    fig.update_yaxes(title_text="Revenue", secondary_y=False)
+    fig.update_yaxes(title_text="Cumulative %", range=[0, 110], secondary_y=True)
+    
+    return fig
+
+def plot_seller_scatter(df):
+    """
+    Plots Seller Performance Matrix: Revenue vs Late Rate.
+    """
+    fig = px.scatter(
+        df, 
+        x="late_rate", 
+        y="revenue", 
+        size="total_orders",
+        color="late_rate", # Fixed: Changed from 'is_late' (which doesn't exist in agg) to 'late_rate'
+        hover_name="seller_id",
+        title="Seller Performance Matrix",
+        labels={"late_rate": "Late Delivery Rate", "revenue": "Total Revenue", "total_orders": "Order Volume"},
+        color_continuous_scale="RdYlGn_r" # Green for low late rate, Red for high
+    )
+    
+    # Add quadrants
+    # Median Lines
+    med_rev = df['revenue'].median()
+    med_late = df['late_rate'].median()
+    
+    fig.add_shape(type="line", x0=med_late, x1=med_late, y0=0, y1=df['revenue'].max(), line=dict(dash="dot", color="gray"))
+    fig.add_shape(type="line", x0=0, x1=df['late_rate'].max(), y0=med_rev, y1=med_rev, line=dict(dash="dot", color="gray"))
+    
+    return fig

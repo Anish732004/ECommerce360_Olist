@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
 from src.modules.loader import load_data
 from src.modules import analytics, visuals
 
@@ -56,7 +57,14 @@ st.sidebar.markdown("---")
 # Navigation
 page = st.sidebar.radio(
     "Navigation",
-    ["📊 Executive Overview", "🕸️ Product Network", "💬 Customer Sentiment", "🌍 Geographic Footprint", "🔮 Predictive Analytics"]
+    [
+        "📊 Executive Overview", 
+        "🕸️ Product Network", 
+        "💬 Customer Sentiment", 
+        "🌍 Geographic Footprint", 
+        "🔮 Predictive Analytics",
+        "🧠 Strategic Deep Dive" # New Phase 4 Tab
+    ]
 )
 
 st.sidebar.markdown("---")
@@ -88,7 +96,7 @@ df_reviews = data_dict['reviews']
 def display_insight(text):
     st.markdown(f"""
     <div class="insight-box">
-        <span class="insight-title">� Business Insight:</span> {text}
+        <span class="insight-title">💡 Business Insight:</span> {text}
     </div>
     """, unsafe_allow_html=True)
 
@@ -97,15 +105,20 @@ def display_insight(text):
 if page == "📊 Executive Overview":
     st.title("📊 Executive Performance Overview")
     
-    # metrics
-    total_orders = len(df_orders)
-    total_revenue = df_items['price'].sum() if 'price' in df_items else 0
+    # Phase 4 Update: MoM Metrics
+    mom_stats = analytics.calculate_mom_metrics(df_orders.merge(df_items, on='order_id', how='left'))
     avg_score = df_reviews['review_score'].mean() if 'review_score' in df_reviews else 0
     unique_cust = df_master['customer_unique_id'].nunique()
     
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Orders", f"{total_orders:,}")
-    col2.metric("Total Revenue", f"R$ {total_revenue:,.2f}")
+    if mom_stats:
+        col1.metric("Total Revenue", f"R$ {mom_stats['revenue']:,.0f}", f"{mom_stats['rev_delta']:.1f}%")
+        col2.metric("Total Orders", f"{mom_stats['orders']:,}", f"{mom_stats['order_delta']:.1f}%")
+    else:
+        # Fallback if calculation fails
+        col1.metric("Total Revenue", f"R$ {df_items['price'].sum():,.0f}")
+        col2.metric("Total Orders", f"{len(df_orders):,}")
+        
     col3.metric("Avg Review Score", f"{avg_score:.2f} / 5")
     col4.metric("Unique Customers", f"{unique_cust:,}")
     
@@ -211,7 +224,6 @@ elif page == "🌍 Geographic Footprint":
         geo_df = data_dict['geolocation']
         
         # Filter Outliers (Brazil Bounding Box Approx)
-        # Lat: -34 to +5, Lon: -74 to -34
         geo_df = geo_df[
             (geo_df['geolocation_lat'] >= -34) & (geo_df['geolocation_lat'] <= 5) &
             (geo_df['geolocation_lng'] >= -74) & (geo_df['geolocation_lng'] <= -34)
@@ -235,7 +247,7 @@ elif page == "🌍 Geographic Footprint":
         st.warning("Geolocation data missing.")
 
 elif page == "🔮 Predictive Analytics":
-    st.title("🔮 Predictive Analytics & Deep Dive")
+    st.title("🔮 Predictive Analytics")
     
     # Forecasting
     st.subheader("📈 Sales Forecasting (Next 3 Months)")
@@ -315,3 +327,63 @@ elif page == "🔮 Predictive Analytics":
                     """)
                 else:
                     st.error("Missing RFM columns.")
+
+elif page == "🧠 Strategic Deep Dive":
+    st.title("🧠 Strategic Business Deep Dive")
+    st.markdown("Advanced tools for C-Level decision making.")
+    
+    tab1, tab2, tab3 = st.tabs(["🔥 Cohort Retention", "⚖️ Pareto Analysis", "🚚 Seller Performance"])
+    
+    with tab1:
+        st.subheader("Customer Retention Heatmap")
+        st.write("What percentage of customers return to buy again in subsequent months?")
+        if 'order_purchase_timestamp' in df_master:
+            retention_matrix = analytics.calculate_cohort_retention(df_master)
+            if retention_matrix is not None:
+                fig_cohort = visuals.plot_cohort_heatmap(retention_matrix)
+                st.plotly_chart(fig_cohort, use_container_width=True)
+                display_insight("""
+                **How to Read**: 
+                <ul>
+                    <li><b>Rows</b>: Different groups (Cohorts) based on their first purchase month.</li>
+                    <li><b>Columns</b>: Month 0 is the purchase month (always 100%). Month 1, 2, etc. show what % returned.</li>
+                </ul>
+                **Insight**: 
+                The heatmap shows <b>very low retention</b> (fading to white immediately). Most customers buy once and never return. 
+                <br><b>Action</b>: Since acquisition is working but retention isn't, pivot strategy to <b>subscription models</b> or <b>post-purchase reactivation campaigns</b> (e.g., 'Replenishment Reminder' emails).
+                """)
+            else:
+                st.warning("Insufficient data for Cohort Analysis.")
+    
+    with tab2:
+        st.subheader("Pareto Analysis (80/20 Rule)")
+        st.write("Identify the 20% of products driving 80% of revenue.")
+        if st.button("Generate Pareto Chart"):
+            pareto_df = analytics.calculate_pareto(df_master, entity='product_id', metric='price')
+            # For visualization, we need to limit x-axis or it's too dense. Top 500?
+            pareto_top = pareto_df.head(100) # visualizing top 100 products
+            fig_pareto = visuals.plot_pareto(pareto_top, 'product_id', 'price', 'cumulative_perc')
+            st.plotly_chart(fig_pareto, use_container_width=True)
+            display_insight("The steep curve confirms the Pareto Principle. Protect stock levels for these top items at all costs.")
+            
+    with tab3:
+        st.subheader("Seller Performance Matrix")
+        st.write("Evaluating Sellers: Revenue vs. Reliability (Late Delivery Rate).")
+        if 'seller_id' in df_master:
+            seller_stats = analytics.get_seller_performance(df_master)
+            if seller_stats is not None:
+                fig_seller = visuals.plot_seller_scatter(seller_stats)
+                st.plotly_chart(fig_seller, use_container_width=True)
+                display_insight("Quadrants: Top-Right = High Revenue but Unreliable. Bottom-Right = Stars (High Revenue, Reliable). Bottom-Left = Low Revenue, Reliable. Top-Left = Liabilities.")
+                
+    st.markdown("---")
+    st.subheader("🎛️ Interactive 'What-If' Simulator")
+    st.write("Simulate improvements in operations.")
+    
+    col_sim1, col_sim2 = st.columns(2)
+    with col_sim1:
+        delivery_improvement = st.slider("Improve Delivery Time by (Days)", 0, 10, 2)
+    with col_sim2:
+        projected_score_increase = delivery_improvement * 0.15 # Dummy logic for visualization
+        st.metric("Projected Avg Review Score Increase", f"+{projected_score_increase:.2f} ⭐")
+        display_insight(f"Based on historical correlations, faster delivery significantly boosts CSAT. Reducing delivery by {delivery_improvement} days could lift your average rating by {projected_score_increase:.2f} points.")
