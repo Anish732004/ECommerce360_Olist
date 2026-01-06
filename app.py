@@ -366,10 +366,16 @@ elif page == "🧠 Strategic Deep Dive":
         st.subheader("Pareto Analysis (80/20 Rule)")
         st.write("Identify the 20% of products driving 80% of revenue.")
         if st.button("Generate Pareto Chart"):
-            pareto_df = analytics.calculate_pareto(df_master, entity='product_id', metric='price')
+            # Create a more readable label: "Category (ID...)"
+            # Handle potential missing categories
+            df_master['temp_cat_name'] = df_master['product_category_name_english'].fillna('Unknown')
+            df_master['product_display_name'] = df_master['temp_cat_name'].astype(str) + " (" + df_master['product_id'].str[:6] + ")"
+            
+            pareto_df = analytics.calculate_pareto(df_master, entity='product_display_name', metric='price')
+            
             # For visualization, we need to limit x-axis or it's too dense. Top 500?
             pareto_top = pareto_df.head(100) # visualizing top 100 products
-            fig_pareto = visuals.plot_pareto(pareto_top, 'product_id', 'price', 'cumulative_perc')
+            fig_pareto = visuals.plot_pareto(pareto_top, 'product_display_name', 'price', 'cumulative_perc')
             st.plotly_chart(fig_pareto, use_container_width=True)
             display_insight("The steep curve confirms the Pareto Principle. Protect stock levels for these top items at all costs.")
             
