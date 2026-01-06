@@ -6,3 +6,4 @@ networkx
 wordcloud
 vaderSentiment
 matplotlib
+scikit-learn
