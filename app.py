@@ -110,14 +110,16 @@ if page == "📊 Executive Overview":
     avg_score = df_reviews['review_score'].mean() if 'review_score' in df_reviews else 0
     unique_cust = df_master['customer_unique_id'].nunique()
     
+    # Display Lifetime Totals (Correctness first!)
+    # We will use the delta from the MoM stats
     col1, col2, col3, col4 = st.columns(4)
+    
     if mom_stats:
-        col1.metric("Total Revenue", f"R$ {mom_stats['revenue']:,.0f}", f"{mom_stats['rev_delta']:.1f}%")
-        col2.metric("Total Orders", f"{mom_stats['orders']:,}", f"{mom_stats['order_delta']:.1f}%")
+        col1.metric("Total Revenue", f"R$ {total_revenue:,.0f}", f"{mom_stats['rev_delta']:.1f}% (Last Month)")
+        col2.metric("Total Orders", f"{total_orders:,}", f"{mom_stats['order_delta']:.1f}% (Last Month)")
     else:
-        # Fallback if calculation fails
-        col1.metric("Total Revenue", f"R$ {df_items['price'].sum():,.0f}")
-        col2.metric("Total Orders", f"{len(df_orders):,}")
+        col1.metric("Total Revenue", f"R$ {total_revenue:,.0f}")
+        col2.metric("Total Orders", f"{total_orders:,}")
         
     col3.metric("Avg Review Score", f"{avg_score:.2f} / 5")
     col4.metric("Unique Customers", f"{unique_cust:,}")

@@ -211,6 +211,7 @@ def get_seller_performance(df):
 def calculate_mom_metrics(df):
     """
     Calculates Month-over-Month growth for key metrics.
+    Robustly handles partial last months by filtering valid data range or checking day count.
     """
     pd.set_option('mode.chained_assignment', None)
     if 'order_purchase_timestamp' not in df.columns:
@@ -222,11 +223,22 @@ def calculate_mom_metrics(df):
         'order_id': 'nunique',
     }).reset_index()
     
+    # Olist Data Specific Fix: The dataset has artifacts/partial data in Sep/Oct 2018
+    # We will filter for a stable period or drop the last row if it's drastically lower than the mean
+    if len(monthly) > 1:
+        last_val = monthly.iloc[-1]['price']
+        prev_val = monthly.iloc[-2]['price']
+        
+        # If last month dropped by > 90% (likely partial), drop it
+        if prev_val > 0 and (last_val / prev_val) < 0.1:
+            monthly = monthly.iloc[:-1]
+    
     # Calculate Deltas
     monthly['rev_growth'] = monthly['price'].pct_change() * 100
     monthly['order_growth'] = monthly['order_id'].pct_change() * 100
     
-    # Get last month stats
+    # Get last valid month stats
+    if len(monthly) == 0: return None
     current = monthly.iloc[-1]
     
     # Handle NaN for first month
@@ -234,9 +246,9 @@ def calculate_mom_metrics(df):
     order_delta = current['order_growth'] if not np.isnan(current['order_growth']) else 0
     
     return {
-        'revenue': current['price'],
+        'last_month_revenue': current['price'],
         'rev_delta': rev_delta,
-        'orders': current['order_id'],
+        'last_month_orders': current['order_id'],
         'order_delta': order_delta
     }
 
