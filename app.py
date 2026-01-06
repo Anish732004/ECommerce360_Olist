@@ -243,7 +243,16 @@ elif page == "🔮 Predictive Analytics":
         ts_data, model, forecast = analytics.forecast_sales(df_master, period='M', horizon=3)
         fig_forecast = visuals.plot_forecast_chart(ts_data, model, forecast)
         st.plotly_chart(fig_forecast, use_container_width=True)
-        display_insight("Forecast indicates stable growth. Ensure inventory levels for the predicted 3-month horizon to avoid stockouts.")
+        display_insight(f"""
+        **Forecast Analysis**: The trend suggests likely demand growth.
+        <br><br>
+        **Actionable Strategies**:
+        <ul>
+            <li><b>Inventory</b>: Increase stock by 10-15% for the next quarter to prevent stockouts.</li>
+            <li><b>Cash Flow</b>: Prepare for higher procurement costs in Month 1 to support Month 3 sales.</li>
+            <li><b>Marketing</b>: If a dip is forecast, schedule flash sales to flatten the curve.</li>
+        </ul>
+        """)
     
     st.markdown("---")
     
@@ -268,7 +277,16 @@ elif page == "🔮 Predictive Analytics":
                         
                         acc = clf.score(X_test, y_test)
                         st.success(f"Model Accuracy: {acc:.2%}")
-                        display_insight(f"Model achieves {acc:.2%} accuracy. High False Positives in the matrix would mean we warn customers unnecessarily; High False Negatives mean we miss actual delays.")
+                        display_insight(f"""
+                        **Model Accuracy**: {acc:.2%}
+                        <br><br>
+                        **Metrics Interpretation**:
+                        <ul>
+                            <li><b>False Positives (Type I Error)</b>: We predicted 'Late', but it arrived 'On Time'. <i>Risk:</i> Unnecessary expediting costs.</li>
+                            <li><b>False Negatives (Type II Error)</b>: We predicted 'On Time', but it was 'Late'. <i>Risk:</i> Unexpected customer churn. (Critical to minimize!)</li>
+                        </ul>
+                        **Strategy**: For orders flagged as 'Late' (High Probability), automatically email the customer with a proactive delay notification and a coupon to save the relationship.
+                        """)
                     else:
                         st.warning("Not enough data.")
                 else:
@@ -287,6 +305,13 @@ elif page == "🔮 Predictive Analytics":
                                        color_continuous_scale='RdBu', title="Customer Segments Distribution")
                     st.plotly_chart(fig_rfm, use_container_width=True)
                     
-                    display_insight("Most customers are likely 'One-time Buyers' (Hibernating) or 'New'. A loyalty program is critical to convert them into 'Champions'.")
+                    display_insight("""
+                    **Segmentation Strategy**:
+                    <ul>
+                        <li><b>🏆 Champions</b> (High R, F, M): Invite to a 'VIP Beta Program'. Early access to new products.</li>
+                        <li><b>⚠️ At Risk</b> (High M, Low R): These big spenders haven't visited lately. Trigger a 'We Miss You' email flow with a strong discount.</li>
+                        <li><b>🌱 New Customers</b> (High R, Low F): Focus on onboarding and post-purchase satisfaction to drive the second sale.</li>
+                    </ul>
+                    """)
                 else:
                     st.error("Missing RFM columns.")
