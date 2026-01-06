@@ -348,9 +348,10 @@ elif page == "🧠 Strategic Deep Dive":
                     <li><b>Rows</b>: Different groups (Cohorts) based on their first purchase month.</li>
                     <li><b>Columns</b>: Month 0 is the purchase month (always 100%). Month 1, 2, etc. show what % returned.</li>
                 </ul>
-                **Insight**: 
-                The heatmap shows <b>very low retention</b> (fading to white immediately). Most customers buy once and never return. 
-                <br><b>Action</b>: Since acquisition is working but retention isn't, pivot strategy to <b>subscription models</b> or <b>post-purchase reactivation campaigns</b> (e.g., 'Replenishment Reminder' emails).
+                **Business Conclusion**: 
+                You have a <b>"Leaky Bucket"</b> business model. You are excellent at acquiring and serving new customers (High Funnel), but terrible at keeping them (Low Cohort). This is a classic E-commerce problem where the focus is too heavily on acquisition (Ads) rather than Retention (Loyalty Programs/Email Marketing).
+                <br><br>
+                **Action**: Maintain your logistics (Funnel is good!), but urgently invest in CRM/Loyalty (Cohort is bad).
                 """)
             else:
                 st.warning("Insufficient data for Cohort Analysis.")
