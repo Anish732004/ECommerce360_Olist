@@ -332,7 +332,7 @@ elif page == "🧠 Strategic Deep Dive":
     st.title("🧠 Strategic Business Deep Dive")
     st.markdown("Advanced tools for C-Level decision making.")
     
-    tab1, tab2, tab3 = st.tabs(["🔥 Cohort Retention", "⚖️ Pareto Analysis", "🚚 Seller Performance"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🔥 Cohort Retention", "⚖️ Pareto Analysis", "🚚 Seller Performance", "🎛️ What-If Simulator"])
     
     with tab1:
         st.subheader("Customer Retention Heatmap")
@@ -376,14 +376,14 @@ elif page == "🧠 Strategic Deep Dive":
                 st.plotly_chart(fig_seller, use_container_width=True)
                 display_insight("Quadrants: Top-Right = High Revenue but Unreliable. Bottom-Right = Stars (High Revenue, Reliable). Bottom-Left = Low Revenue, Reliable. Top-Left = Liabilities.")
                 
-    st.markdown("---")
-    st.subheader("🎛️ Interactive 'What-If' Simulator")
-    st.write("Simulate improvements in operations.")
-    
-    col_sim1, col_sim2 = st.columns(2)
-    with col_sim1:
-        delivery_improvement = st.slider("Improve Delivery Time by (Days)", 0, 10, 2)
-    with col_sim2:
-        projected_score_increase = delivery_improvement * 0.15 # Dummy logic for visualization
-        st.metric("Projected Avg Review Score Increase", f"+{projected_score_increase:.2f} ⭐")
-        display_insight(f"Based on historical correlations, faster delivery significantly boosts CSAT. Reducing delivery by {delivery_improvement} days could lift your average rating by {projected_score_increase:.2f} points.")
+    with tab4:
+        st.subheader("🎛️ Interactive 'What-If' Simulator")
+        st.write("Simulate improvements in operations.")
+        
+        col_sim1, col_sim2 = st.columns(2)
+        with col_sim1:
+            delivery_improvement = st.slider("Improve Delivery Time by (Days)", 0, 10, 2)
+        with col_sim2:
+            projected_score_increase = delivery_improvement * 0.15 # Dummy logic for visualization
+            st.metric("Projected Avg Review Score Increase", f"+{projected_score_increase:.2f} ⭐")
+            display_insight(f"Based on historical correlations, faster delivery significantly boosts CSAT. Reducing delivery by {delivery_improvement} days could lift your average rating by {projected_score_increase:.2f} points.")
