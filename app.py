@@ -118,13 +118,8 @@ if page == "📊 Executive Overview":
     # We will use the delta from the MoM stats
     col1, col2, col3, col4 = st.columns(4)
     
-    if mom_stats:
-        col1.metric("Total Revenue", f"R$ {total_revenue:,.0f}", f"{mom_stats['rev_delta']:.1f}% (Last Month)")
-        col2.metric("Total Orders", f"{total_orders:,}", f"{mom_stats['order_delta']:.1f}% (Last Month)")
-    else:
-        col1.metric("Total Revenue", f"R$ {total_revenue:,.0f}")
-        col2.metric("Total Orders", f"{total_orders:,}")
-        
+    col1.metric("Total Revenue", f"R$ {total_revenue:,.0f}")
+    col2.metric("Total Orders", f"{total_orders:,}")
     col3.metric("Avg Review Score", f"{avg_score:.2f} / 5")
     col4.metric("Unique Customers", f"{unique_cust:,}")
     
