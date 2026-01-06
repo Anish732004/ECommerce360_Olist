@@ -110,6 +110,10 @@ if page == "📊 Executive Overview":
     avg_score = df_reviews['review_score'].mean() if 'review_score' in df_reviews else 0
     unique_cust = df_master['customer_unique_id'].nunique()
     
+    # Calculate Totals
+    total_revenue = df_items['price'].sum()
+    total_orders = df_orders['order_id'].nunique()
+    
     # Display Lifetime Totals (Correctness first!)
     # We will use the delta from the MoM stats
     col1, col2, col3, col4 = st.columns(4)
